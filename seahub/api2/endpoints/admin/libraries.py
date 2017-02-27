@@ -17,6 +17,7 @@ from seahub.api2.utils import api_error
 from seahub.base.accounts import User
 from seahub.signals import repo_deleted
 from seahub.views import get_system_default_repo_id
+from seahub.admin_log.signals import admin_delete_repo, admin_transfer_repo
 
 try:
     from seahub.settings import MULTI_TENANCY
@@ -163,6 +164,9 @@ class AdminLibrary(APIView):
                               repo_owner=repo_owner,
                               repo_id=repo_id,
                               repo_name=repo.name)
+
+            admin_delete_repo.send(sender=None,
+                    admin_name=request.user.username, repo_id=repo_id)
         except Exception as e:
             logger.error(e)
             error_msg = 'Internal Server Error'
@@ -256,6 +260,10 @@ class AdminLibrary(APIView):
             seafile_api.add_inner_pub_repo(repo_id, pub_repo.permission)
 
             break
+
+        admin_transfer_repo.send(sender=None,
+                admin_name=request.user.username, repo_id=repo_id,
+                from_email=repo_owner, to_email=new_owner)
 
         repo = seafile_api.get_repo(repo_id)
         repo_info = get_repo_info(repo)

@@ -17,6 +17,9 @@ from seahub.utils.timeutils import timestamp_to_isoformat_timestr
 from seahub.group.utils import is_group_member, is_group_admin, \
         validate_group_name, check_group_name_conflict
 
+from seahub.admin_log.signals import admin_create_group, \
+        admin_transfer_group, admin_delete_group
+
 from seahub.api2.utils import api_error
 from seahub.api2.throttling import UserRateThrottle
 from seahub.api2.authentication import TokenAuthentication
@@ -138,6 +141,9 @@ class AdminGroups(APIView):
             error_msg = 'Internal Server Error'
             return api_error(status.HTTP_500_INTERNAL_SERVER_ERROR, error_msg)
 
+        admin_create_group.send(sender=None,
+                admin_name=username, group_id=group_id)
+
         # get info of new group
         group_info = get_group_info(group_id)
 
@@ -198,6 +204,10 @@ class AdminGroup(APIView):
             error_msg = 'Internal Server Error'
             return api_error(status.HTTP_500_INTERNAL_SERVER_ERROR, error_msg)
 
+        admin_transfer_group.send(sender=None,
+                admin_name=request.user.username,
+                group_id=group_id, from_email=old_owner, to_email=new_owner)
+
         group_info = get_group_info(group_id)
 
         return Response(group_info)
@@ -214,5 +224,8 @@ class AdminGroup(APIView):
             logger.error(e)
             error_msg = 'Internal Server Error'
             return api_error(status.HTTP_500_INTERNAL_SERVER_ERROR, error_msg)
+
+        admin_delete_group.send(sender=None,
+                admin_name=request.user.username, group_id=group_id)
 
         return Response({'success': True})

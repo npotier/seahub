@@ -54,11 +54,12 @@ from seahub.utils.user_permissions import (get_basic_user_roles,
 from seahub.views import get_system_default_repo_id
 from seahub.forms import SetUserQuotaForm, AddUserForm, BatchAddUserForm, \
     TermsAndConditionsForm
-from seahub.profile.forms import ProfileForm, DetailedProfileForm 
+from seahub.profile.forms import ProfileForm, DetailedProfileForm
 from seahub.options.models import UserOptions
 from seahub.profile.models import Profile, DetailedProfile
 from seahub.signals import repo_deleted
 from seahub.share.models import FileShare, UploadLinkShare
+from seahub.admin_log.signals import admin_create_user, admin_delete_user
 import seahub.settings as settings
 from seahub.settings import INIT_PASSWD, SITE_NAME, SITE_ROOT, \
     SEND_EMAIL_ON_ADDING_SYSTEM_MEMBER, SEND_EMAIL_ON_RESETTING_USER_PASSWD, \
@@ -712,6 +713,9 @@ def user_remove(request, email):
     except User.DoesNotExist:
         messages.error(request, _(u'Failed to delete: the user does not exist'))
 
+    admin_delete_user.send(sender=None,
+            admin_name=request.user.username, deleted_user=email)
+
     return HttpResponseRedirect(next)
 
 @login_required
@@ -984,6 +988,9 @@ def user_add(request):
             logger.error(e)
             err_msg = _(u'Fail to add user %s.') % email
             return HttpResponse(json.dumps({'error': err_msg}), status=403, content_type=content_type)
+
+        admin_create_user.send(sender=None,
+                admin_name=request.user.username, new_user=email)
 
         if user:
             User.objects.update_role(email, role)
