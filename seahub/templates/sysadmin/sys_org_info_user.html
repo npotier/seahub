@@ -154,7 +154,7 @@ $('#add-user-form').submit(function() {
         data: {
             'email': email,
             'name': name,
-            'password': pwd1,
+            'password': pwd1
         },
         success: function(data) {
             location.reload(true);
@@ -175,20 +175,31 @@ $('.remove-user-btn').click(function() {
     var _this = $(this),
         uid = _this.attr('data-userid'),
         org_id = {{ org.org_id }},
-        url = "{{ SITE_ROOT }}api/v2.1/admin/organizations/" + org_id + "/users/" + uid + "/";
+        url = "{{ SITE_ROOT }}api/v2.1/admin/organizations/" + org_id + "/users/" + uid + "/",
+        popupTitle = "{% trans "Delete User" %}",
+        popupContent = "{% trans "Are you sure you want to delete %s ?" %}".replace('%s', '<span class="op-target ellipsis ellipsis-op-target" title="' + HTMLescape(uid) + '">' + HTMLescape(uid) + '</span>');
 
-    $.ajax({
-        url: url,
-        type: 'DELETE',
-        dataType: 'json',
-        cache: false,
-        beforeSend: prepareCSRFToken,
-        success: function() {
-            _this.closest('tr').remove();
-            feedback("{% trans 'Successfully deleted 1 item.' %}", 'success');
-        },
-        error: ajaxErrorHandler
-    });
+    var yesCallback = function() {
+        $.ajax({
+            url: url,
+            type: 'DELETE',
+            dataType: 'json',
+            cache: false,
+            beforeSend: prepareCSRFToken,
+            success: function() {
+                _this.closest('tr').remove();
+                feedback("{% trans "Successfully deleted 1 item." %}", 'success');
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                ajaxErrorHandler(xhr, textStatus, errorThrown);
+            },
+            complete: function() {
+                $.modal.close();
+            }
+        });
+    };
+    showConfirm(popupTitle, popupContent, yesCallback);
+    return false;
 });
 
 addConfirmTo($('.reset-user-btn'), {
