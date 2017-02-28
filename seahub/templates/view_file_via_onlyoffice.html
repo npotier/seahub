@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block main_content %}
+<div id="placeholder"></div>
+{% endblock %}
+
+{% block extra_script %}{{ block.super }}
+<script type="text/javascript" src="http://13.113.111.2/web-apps/apps/api/documents/api.js"></script>
+<script type="text/javascript">
+
+var config = {
+    "document": {
+        "fileType": "docx",
+        "key": "Khirz6zTPdfd7",
+        "title": "Example Document Title.docx",
+        "url": "http://seacloud.local:8000/f/22662393c2094f92b9b1/?raw=1",
+    },
+    "documentType": "text",
+    "editorConfig": {
+        "callbackUrl": "http://example.com/url-to-callback.ashx",
+    },
+}; 
+var docEditor = new DocsAPI.DocEditor("placeholder", config);
+</script>
+{% endblock %}

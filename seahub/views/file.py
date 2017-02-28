@@ -425,6 +425,9 @@ def _file_view(request, repo_id, path):
 
     is_locked, locked_by_me = check_file_lock(repo_id, path, username)
 
+    return render_to_response('view_file_via_onlyoffice.html', {},
+                              context_instance=RequestContext(request))
+    
     # check if use office web app to view/edit file
     if is_pro_version() and not repo.encrypted and ENABLE_OFFICE_WEB_APP:
         action_name = None
